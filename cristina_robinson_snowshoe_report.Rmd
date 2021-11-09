@@ -1,0 +1,128 @@
+---
+title: "Bonanza Snowshoe Hares: exploratory report"
+author: "Cristina Robinson"
+date: "11/7/2021"
+output: 
+  html_document:
+    theme: yeti
+    toc: yes
+---
+
+# Overview
+The snowshoe hares in Bonanza Creek Experimental Forest Long Term Ecological Research site (LTER) data is part of the US Long Term Ecological Research Network. 
+
+The data are a fundamental component of conducting research to study the response of the boreal biome to global climate change. The Bonanza LTR program collect various types of environmental data from research locations throughout the boreal forest of Alaska with their near-real-time climate station. Data collected include temperature precipitation, wind, solar radiation, soil temperature, and soil moisture, as well as data for hydrology, animal populations, gas fluxes, tree growth, and vegetation communities. 
+
+This report will explore the counts and sizes of juvenile snowshoe hares recorded from 1998-2012. 
+
+```{r setup, include=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+library(tidyverse) # install packages
+library(here)
+library(lubridate)
+library(kableExtra)
+```
+
+
+```{r}
+bnzhares_data <- read_csv(here("data", "bonanza_hares.csv")) # read in data
+```
+
+## 1. Juvenile snowshoe hare initial investigation: This section looks at the total number of juvenile hare trappings during each study year.
+### Summary Statistics: mean, median, and SD with summary table
+
+```{r}
+# create columns for total number of juvenile hare trappings per year
+hares_year <- bnzhares_data %>% # new column for years
+  mutate(date = mdy(date)) %>%
+  mutate(year = year(date))
+
+hares_juvenile <- hares_year %>% # store new data frame of just juvenile hares
+  filter(age == "j")
+
+hares_traps <- hares_year %>% # new column for traps
+  select(year, age) %>%
+  filter(age == "j") %>%
+  group_by(year) %>%
+  summarize(number = n())
+
+hares_traps %>%
+  kbl() %>%
+  kable_styling()
+```
+
+```{r}
+ggplot(data = hares_traps, 
+       aes(x = year, y = number)) +
+  geom_col(color = "gray", fill = "aquamarine") +
+  scale_x_continuous(breaks = 1999:2012) +
+  labs(x = "Year", 
+       y = "Number of Traps", 
+       title = "Annual Juvenile Snowshoe Hare Traps", 
+       caption = "Figure 1. Juvenile Snowshoe Hare Traps from 1999-2012") + 
+theme(plot.title = element_text(hjust = 0.5))
+```
+- The minimum count of juvenile hare trappings was 2 traps in 2010, while the maximum count of juvenile hare trappings was 126 in 1999. 
+
+- The mean annual number of juvenile hares trapped was 31.5, while the median number of juvenile hares trapped was 18.5 traps per year.
+
+- General/notable trends? The general trend of this data is that there are less juvenile hare traps put out as the years go in, seen by the highest number (126) of hare traps placed in 1999 and the lowest number (2) of hare traps placed in 2010. 
+
+- These are absolute counts, but this count is also impacted by effort (e.g. the number of days and number of traps in the study each year). What would you suggest be done moving forward (you are not expected to actually do this) to standardize the juvenile hare population in future analyses? I would suggest 
+
+## 2. Juvenile snowshoe hare initial investigation: This section looks at juvenile hare weights by sex and research site, including groups where these variables were not recorded. 
+
+```{r}
+juvehare_weights <- hares_juvenile %>% # create new data frame
+  select(weight, sex, grid) # select for weight, sex, research site (grid)
+  ggplot(data = juvehare_weights, aes(x = sex, y = weight, color = sex)) +
+    geom_jitter(aes(color = sex), size = 1) +
+    geom_boxplot(fill = NA) + 
+    scale_color_manual(values = c("orchid2", "darkseagreen3", "lightsteelblue4")) +
+    theme_light() + 
+    facet_wrap( ~ grid) + 
+    labs (x = "Sex", 
+       y = "Sites", 
+       title = "Juvenile Snowshoe Hare Sex and Weight per Site", 
+       caption = "Figure 2. Sex of Juvenile Snowshoe Hares by Weight per Site") + 
+theme(plot.title = element_text(hjust = 0.5)) 
+```
+
+### Takeaways: 
+
+
+## 3. Juvenile snowshoe hare initial investigation: This section further looks at juvenile hare weights by sex comparing mean weights.
+
+### Summary Statistics
+```{r}
+juve_hare_weight_compare <- hares_juvenile %>%
+  select(sex, weight) %>% # select sex and weight of juvenile hares
+  group_by(sex) %>% # group by male and female 
+  drop_na(weight) # filter out NA weights 
+
+juve_hare_weight_summary <- juve_hare_weight_compare %>%
+  summarize(mean_weight = mean(weight, na.rm = TRUE), # summary of statistics 
+            median_weight = median(weight, na.rm = TRUE),
+            sd_weight = sd(weight, na.rm = TRUE), #filter out NA weights 
+            n = n()) #how many there are 
+
+juve_hare_weight_summary %>%
+  kbl(col.names = c("Sex", # add column names to summary table 
+                    "Mean Weight (g)",
+                    "Median Weight (g)",
+                    "Standard Deviation",
+                    "Sample Size (n)")) %>%
+  kable_styling(full_width = FALSE)
+  
+```
+
+
+## 4. Juvenile snowshoe hare initial investigation: This section looks at the relationship between hare hind food length and weight for all juvenile haires in the study. 
+
+#### Exploratory graph: qqplot
+
+#### Exploratory grapph: histogram
+
+## 5. Summary:
+
+### **Citations**: Kielland, K., F.S. Chapin, R.W. Ruess, and Bonanza Creek LTER. 2017. Snowshoe hare physical data in Bonanza Creek Experimental Forest: 1999-Present ver 22. Environmental Data Initiative. https://doi.org/10.6073/pasta/03dce4856d79b91557d8e6ce2cbcdc14 
